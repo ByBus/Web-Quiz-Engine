@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class Result {
+public abstract class Feedback {
     private boolean success;
     private String feedback;
 }

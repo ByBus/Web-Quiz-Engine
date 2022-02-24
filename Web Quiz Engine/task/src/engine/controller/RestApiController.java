@@ -1,12 +1,14 @@
 package engine.controller;
 
-import engine.model.Quiz;
-import engine.model.Result;
+import engine.buiseness.AnswerChecker;
+import engine.buiseness.Checker;
+import engine.model.*;
 import engine.repository.Saver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -19,7 +21,7 @@ public class RestApiController {
     }
 
     @PostMapping("/api/quizzes")
-    public Quiz createQuiz(@RequestBody Quiz newQuiz) {
+    public Quiz createQuiz(@Valid @RequestBody Quiz newQuiz) {
         return repository.save(newQuiz);
     }
 
@@ -34,10 +36,10 @@ public class RestApiController {
     }
 
     @PostMapping("/api/quizzes/{id}/solve")
-    public ResponseEntity<Result> checkAnswer(@PathVariable int id, @RequestParam int answer) {
+    public ResponseEntity<Feedback> checkAnswer(@PathVariable int id, @RequestBody Answer answer) {
         Quiz quiz = repository.restore(id);
-        boolean isCorrect = answer == quiz.getAnswer();
-        String feedback = isCorrect ? "Congratulations, you're right!" : "Wrong answer! Please, try again.";
-        return ResponseEntity.ok(new Result(isCorrect, feedback));
+        Checker answerChecker = new AnswerChecker(quiz.getAnswer(), answer.getAnswer());
+        Feedback feedback = answerChecker.check() ? new CorrectFeedback() : new WrongFeedback();
+        return ResponseEntity.ok(feedback);
     }
 }

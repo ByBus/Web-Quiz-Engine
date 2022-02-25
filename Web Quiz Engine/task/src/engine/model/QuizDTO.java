@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class Quiz {
+public class QuizDTO {
     private int id;
     @NotEmpty
     private String title;

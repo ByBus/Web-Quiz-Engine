@@ -1,6 +1,5 @@
 package engine.buiseness;
 
-import java.util.Collections;
 import java.util.List;
 
 public class AnswerChecker implements Checker {
@@ -14,7 +13,6 @@ public class AnswerChecker implements Checker {
 
     @Override
     public boolean check() {
-        List<Integer> quizAnswers = answers == null ? Collections.emptyList() : answers;
-        return quizAnswers.size() == answersToCheck.size() && quizAnswers.containsAll(answersToCheck);
+        return answers.size() == answersToCheck.size() && answers.containsAll(answersToCheck);
     }
 }

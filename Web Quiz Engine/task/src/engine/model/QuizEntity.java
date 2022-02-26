@@ -29,4 +29,8 @@ public class QuizEntity {
     @NonNull
     @ElementCollection
     private List<Integer> answer;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name="user_id", nullable=false)
+    private UserEntity user;
 }

@@ -20,7 +20,9 @@ public class CorrectQuizAnswerEntity {
     private int id;
 
     @NonNull
-    private int quizId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name="quiz_id", nullable=false)
+    private QuizEntity quiz;
 
     @CreationTimestamp
     private LocalDateTime completedAt;

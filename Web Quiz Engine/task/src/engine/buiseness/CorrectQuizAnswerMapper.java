@@ -13,6 +13,6 @@ public class CorrectQuizAnswerMapper implements Mapper<CorrectQuizAnswerDTO, Cor
 
     @Override
     public CorrectQuizAnswerDTO mapToDTO(CorrectQuizAnswerEntity entity) {
-        return new CorrectQuizAnswerDTO(entity.getQuizId(), entity.getCompletedAt());
+        return new CorrectQuizAnswerDTO(entity.getQuiz().getId(), entity.getCompletedAt());
     }
 }

@@ -71,7 +71,7 @@ public class RestApiController {
         FeedbackDTO feedback = isAnswerCorrect ? new CorrectFeedback() : new WrongFeedback();
         if (isAnswerCorrect) {
             UserEntity user = repository.getUserByEmail(details.getUsername());
-            CorrectQuizAnswerEntity correctAnswer = new CorrectQuizAnswerEntity(id, user);
+            CorrectQuizAnswerEntity correctAnswer = new CorrectQuizAnswerEntity(quiz, user);
             repository.save(correctAnswer);
         }
         return ResponseEntity.ok(feedback);

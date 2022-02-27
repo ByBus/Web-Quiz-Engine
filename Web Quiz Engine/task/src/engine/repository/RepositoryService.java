@@ -34,7 +34,7 @@ public class RepositoryService {
         return quizRepository.findById(id).orElseThrow(QuizNotFoundException::new);
     }
 
-    public UserEntity save (UserEntity user) {
+    public UserEntity save(UserEntity user) {
         return userRepository.save(user);
     }
 

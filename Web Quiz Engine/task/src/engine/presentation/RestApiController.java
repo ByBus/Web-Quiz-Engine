@@ -68,7 +68,7 @@ public class RestApiController {
         QuizEntity quiz = repository.getQuizById(id);
         Checker answerChecker = new AnswerChecker(quiz.getAnswer(), answer.getAnswer());
         boolean isAnswerCorrect = answerChecker.check();
-        FeedbackDTO feedback = isAnswerCorrect ? new CorrectFeedback() : new WrongFeedback();
+        FeedbackDTO feedback = isAnswerCorrect ? new FeedbackDTO.Correct() : new FeedbackDTO.Wrong();
         if (isAnswerCorrect) {
             UserEntity user = repository.getUserByEmail(details.getUsername());
             CorrectQuizAnswerEntity correctAnswer = new CorrectQuizAnswerEntity(quiz, user);

@@ -24,5 +24,8 @@ public class UserEntity {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<QuizEntity> quizzes = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<CorrectQuizAnswerEntity> correctQuizEntities = new ArrayList<>();
+
     private String role = "ROLE_USER";
 }

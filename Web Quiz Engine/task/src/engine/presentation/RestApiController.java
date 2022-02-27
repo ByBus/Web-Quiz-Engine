@@ -5,11 +5,10 @@ import engine.buiseness.Checker;
 import engine.buiseness.Mapper;
 import engine.exceptions.BadRequestException;
 import engine.exceptions.ForbiddenException;
-import engine.exceptions.QuizNotFoundException;
-import engine.exceptions.UnauthorizedException;
 import engine.model.*;
 import engine.repository.RepositoryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,33 +17,31 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @RestController
 public class RestApiController {
     private final RepositoryService repository;
-    private final Mapper<QuizDTO, QuizEntity> mapper;
+    private final Mapper<QuizDTO, QuizEntity> quizMapper;
     private final PasswordEncoder encoder;
+    private final Mapper<CorrectQuizAnswerDTO, CorrectQuizAnswerEntity> answerMapper;
 
     @Autowired
     public RestApiController(RepositoryService repository,
-                             Mapper<QuizDTO, QuizEntity> mapper,
-                             PasswordEncoder encoder) {
+                             Mapper<QuizDTO, QuizEntity> quizMapper,
+                             PasswordEncoder encoder,
+                             Mapper<CorrectQuizAnswerDTO, CorrectQuizAnswerEntity> answerMapper) {
         this.repository = repository;
-        this.mapper = mapper;
+        this.quizMapper = quizMapper;
         this.encoder = encoder;
+        this.answerMapper = answerMapper;
     }
 
     @PostMapping("/api/quizzes")
     public QuizDTO createQuiz(@AuthenticationPrincipal UserDetails details,
                               @Valid @RequestBody QuizDTO newQuiz) {
-        if (details == null) {
-            throw new UnauthorizedException();
-        }
         UserEntity user = repository.getUserByEmail(details.getUsername());
-        QuizEntity quiz = mapper.mapToEntity(newQuiz);
+        QuizEntity quiz = quizMapper.mapToEntity(newQuiz);
         quiz.setUser(user);
         QuizEntity savedQuiz = repository.save(quiz);
         newQuiz.setId(savedQuiz.getId());
@@ -52,35 +49,31 @@ public class RestApiController {
     }
 
     @GetMapping("/api/quizzes/{id}")
-    public QuizDTO getQuizById(@AuthenticationPrincipal UserDetails details,
-                               @PathVariable int id) {
-        if (details == null) {
-            throw new UnauthorizedException();
-        }
+    public QuizDTO getQuizById(@PathVariable int id) {
         QuizEntity quiz = repository.getQuizById(id);
-        return mapper.mapToDTO(quiz);
+        return quizMapper.mapToDTO(quiz);
     }
 
     @GetMapping("/api/quizzes")
-    public List<QuizDTO> getAllQuizzes(@AuthenticationPrincipal UserDetails details) {
-        if (details == null) {
-            throw new UnauthorizedException();
-        }
-        return repository.getAll().stream()
-                .map(mapper::mapToDTO)
-                .collect(Collectors.toList());
+    public Page<QuizDTO> getAllQuizzes(@RequestParam(defaultValue = "0") int page,
+                                       @RequestParam(defaultValue = "10") int size) {
+        Page<QuizEntity> currentPageEntity = repository.getAllQuizzesPaging(page, size);
+        return currentPageEntity.map(quizMapper::mapToDTO);
     }
 
     @PostMapping("/api/quizzes/{id}/solve")
-    public ResponseEntity<Feedback> checkAnswer(@AuthenticationPrincipal UserDetails details,
-                                                @PathVariable int id,
-                                                @RequestBody Answer answer) {
-        if (details == null) {
-            throw new UnauthorizedException();
-        }
+    public ResponseEntity<FeedbackDTO> checkAnswer(@AuthenticationPrincipal UserDetails details,
+                                                   @PathVariable int id,
+                                                   @RequestBody AnswerDTO answer) {
         QuizEntity quiz = repository.getQuizById(id);
         Checker answerChecker = new AnswerChecker(quiz.getAnswer(), answer.getAnswer());
-        Feedback feedback = answerChecker.check() ? new CorrectFeedback() : new WrongFeedback();
+        boolean isAnswerCorrect = answerChecker.check();
+        FeedbackDTO feedback = isAnswerCorrect ? new CorrectFeedback() : new WrongFeedback();
+        if (isAnswerCorrect) {
+            UserEntity user = repository.getUserByEmail(details.getUsername());
+            CorrectQuizAnswerEntity correctAnswer = new CorrectQuizAnswerEntity(id, user);
+            repository.save(correctAnswer);
+        }
         return ResponseEntity.ok(feedback);
     }
 
@@ -99,9 +92,6 @@ public class RestApiController {
     @DeleteMapping("api/quizzes/{id}")
     public ResponseEntity<String> deleteQuiz(@AuthenticationPrincipal UserDetails details,
                                              @PathVariable int id) {
-        if (details == null) {
-            throw new UnauthorizedException();
-        }
         UserEntity user = repository.getUserByEmail(details.getUsername());
         QuizEntity quiz = repository.getQuizById(id);
         if (Objects.equals(quiz.getUser(), user)) {
@@ -110,5 +100,15 @@ public class RestApiController {
         } else {
             throw new ForbiddenException();
         }
+    }
+
+    @GetMapping("/api/quizzes/completed")
+    public Page<CorrectQuizAnswerDTO> getCompletedQuizPaging(@AuthenticationPrincipal UserDetails details,
+                                                             @RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "10") int size) {
+        UserEntity user = repository.getUserByEmail(details.getUsername());
+        Page<CorrectQuizAnswerEntity> answerPage = repository.getCorrectAnswersOfUserPaging(page, size, user);
+
+        return answerPage.map(answerMapper::mapToDTO);
     }
 }

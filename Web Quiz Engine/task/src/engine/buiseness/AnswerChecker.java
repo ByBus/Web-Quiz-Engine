@@ -13,6 +13,6 @@ public class AnswerChecker implements Checker {
 
     @Override
     public boolean check() {
-        return answers.size() == answersToCheck.size() && answers.containsAll(answersToCheck);
+        return answers.containsAll(answersToCheck) && answersToCheck.containsAll(answers);
     }
 }

@@ -7,6 +7,6 @@ import java.util.List;
 
 @NoArgsConstructor
 @Data
-public class Answer {
-    List<Integer> answer;
+public class AnswerDTO {
+    private List<Integer> answer;
 }
